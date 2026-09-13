@@ -46,9 +46,6 @@ def param_meta(
     increase: str,
     decrease: str,
     *,
-    quick: bool = False,
-    quick_section: str | None = None,
-    quick_order: int | None = None,
     control: str | None = None,
 ) -> Dict[str, Any]:
     metadata = {
@@ -61,9 +58,6 @@ def param_meta(
         "description": description,
         "increase": increase,
         "decrease": decrease,
-        "quick": quick,
-        "quick_section": quick_section or section,
-        "quick_order": quick_order,
     }
     if control is not None:
         metadata["control"] = control
@@ -127,7 +121,6 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "fit_lateral_params.py fit으로 실측한 값을 넣습니다.",
             "전체 이득이 약해져 추종이 느려지고 언더스티어가 늘어납니다.",
             "전체 이득이 강해져 추종이 빨라지고 포화 여유가 줄어듭니다.",
-            quick=True, quick_section="조향 반응", quick_order=10,
         ),
         "torque_kp_raw": param_meta(
             "비례 이득 Kp", "토크 컨트롤러", "raw", 1, 0, 100,
@@ -183,7 +176,6 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "현재 조향 명령이 차량에 반영되기까지의 예측 지연입니다.",
             "경로를 더 앞에서 읽어 커브 진입을 선행하지만 과하면 오버슈트할 수 있습니다.",
             "조향 선행량이 줄어 커브 반응이 늦어질 수 있습니다.",
-            quick=True, quick_section="조향 반응", quick_order=20,
         ),
         "max_steering_angle_deg": param_meta(
             "최대 자동 조향각", "LKAS fault 보호", "°", 5, 0, 360,
@@ -223,7 +215,6 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "뺍니다. fit_lateral_params.py fit의 latAccelOffset을 그대로 넣습니다.",
             "차가 오른쪽으로 쏠릴 때 키우는 방향입니다.",
             "차가 왼쪽으로 쏠릴 때 줄이는 방향입니다.",
-            quick=True, quick_section="주행 위치", quick_order=40,
         ),
         "angle_offset_deg": param_meta(
             "직진 조향각 오프셋", "차량 중심 보정", "°", 0.1, -10, 10,
@@ -260,7 +251,6 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "최종 모델 주행 경로 전체를 좌우로 평행 이동합니다.",
             "목표 주행 위치가 차량 기준 오른쪽으로 이동합니다.",
             "목표 주행 위치가 차량 기준 왼쪽으로 이동합니다.",
-            quick=True, quick_section="주행 위치", quick_order=30,
         ),
         "min_steer_speed_mps": param_meta(
             "최소 자동 조향 속도", "기본 토크 제한", "m/s", 0.1, 0, 5,
@@ -277,9 +267,6 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "끄면 차선이 뚜렷할 때 차선 중심으로 붙는 Lane 모드입니다.",
             "increase": "켜면 차선이 보여도 모델 경로만 따라가고 HUD에 LANELESS로 표시됩니다.",
             "decrease": "끄면 차선 확률이 높을 때 차선 중심 경로를 섞는 Lane 모드로 돌아갑니다.",
-            "quick": True,
-            "quick_section": "경로 모드",
-            "quick_order": 10,
         },
         "model_timeout_ms": param_meta(
             "모델 경로 유효 시간", "데이터 상태", "ms", 50, 50, 2000,
@@ -325,23 +312,18 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "description": "비전 선행차를 기준으로 순정 크루즈의 SET-/RES+ 버튼을 자동 조절합니다.",
             "increase": "켜면 최초 SET 속도를 상한으로 비전 기반 속도 조절을 시작합니다.",
             "decrease": "끄면 자동 버튼 명령을 중지하고 현재 순정 크루즈 설정에 개입하지 않습니다.",
-            "quick": True,
-            "quick_section": "동작",
-            "quick_order": 10,
         },
         "following_time_s": param_meta(
             "주행 차간시간", "차간 거리", "초", 0.1, 0.8, 4.0,
             "현재 속도에 곱해 선행차와 유지할 동적 거리를 계산합니다.",
             "속도에 비례한 차간거리가 늘어 더 일찍 감속합니다.",
             "차간거리가 짧아지고 선행차에 더 가깝게 주행합니다.",
-            quick=True, quick_section="차간 거리", quick_order=20,
         ),
         "standstill_gap_m": param_meta(
             "기본 차간거리", "차간 거리", "m", 0.5, 2.0, 20.0,
             "속도와 무관하게 목표 차간거리에 더하는 기본 거리입니다.",
             "모든 속도에서 선행차와 더 멀리 떨어집니다.",
             "모든 속도에서 선행차와 더 가까워집니다.",
-            quick=True, quick_section="차간 거리", quick_order=30,
         ),
         "gap_correction_gain": param_meta(
             "거리 오차 반응", "속도 반응", "gain", 0.05, 0.05, 1.0,
@@ -405,9 +387,6 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "description": "모델이 실제 사용한 영상과 CAN 송수신, 모델·제어 상태를 함께 저장합니다.",
             "increase": "켜면 하드웨어 H.265 인코더로 기록을 시작합니다.",
             "decrease": "끄면 현재 기록을 안전하게 닫고 인코더를 유휴 상태로 둡니다.",
-            "quick": True,
-            "quick_section": "기록",
-            "quick_order": 10,
         },
         "bitrate_bps": param_meta(
             "기록 비트레이트", "기록", "bps", 500000, 1000000, 20000000,
@@ -424,16 +403,12 @@ PARAM_METADATA: Dict[str, Dict[str, Dict[str, Any]]] = {
             "description": "LCD 영상 출력은 유지한 채 백라이트만 켜거나 끕니다.",
             "increase": "GPIO25를 High로 설정하거나 저장된 밝기의 PWM을 다시 켭니다.",
             "decrease": "GPIO25를 Low로 설정해 백라이트를 완전히 끕니다.",
-            "quick": True,
-            "quick_section": "백라이트",
-            "quick_order": 10,
         },
         "brightness_percent": param_meta(
             "화면 밝기", "백라이트", "%", 1, 1, 100,
             "패널의 저·고밝기 구간을 나누어 실측 보정한 20 kHz PWM입니다. 전원을 꺼도 이 값은 유지됩니다.",
             "화면이 밝아집니다. 100%에서는 GPIO High를 사용합니다.",
             "화면이 어두워집니다. 완전히 끄려면 전원 스위치를 사용합니다.",
-            quick=True, quick_section="백라이트", quick_order=20,
             control="slider",
         ),
     },
@@ -700,22 +675,7 @@ HTML = """<!doctype html>
       width: min(1100px, 100%); margin: 0 auto;
       padding: 16px max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     }
-    .view-bar {
-      display: flex; align-items: center; gap: 12px; justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .view-tabs {
-      display: inline-grid; grid-template-columns: 1fr 1fr;
-      border: 1px solid #454c52; border-radius: 7px; overflow: hidden;
-    }
-    .view-tab {
-      min-height: 40px; padding: 7px 14px; border: 0; border-right: 1px solid #454c52;
-      border-radius: 0; background: #1a1e21; color: var(--muted);
-      cursor: pointer; font-weight: 700;
-    }
-    .view-tab:last-child { border-right: 0; }
-    .view-tab.active { background: #2b343a; color: #fff; }
-    .count { color: var(--muted); font-size: 13px; }
+    .count { margin-bottom: 14px; color: var(--muted); font-size: 13px; }
     .group-note {
       display: none; margin-bottom: 14px; padding: 11px 12px;
       border: 1px solid #6a5630; border-radius: 6px;
@@ -839,8 +799,6 @@ HTML = """<!doctype html>
       h1 { font-size: 17px; }
       .group-tab { font-size: 11px; }
       .connection span:last-child { max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
-      .view-bar { align-items: stretch; flex-direction: column; }
-      .view-tabs { width: 100%; }
       .effects { grid-template-columns: 1fr; }
       .number-control { grid-template-columns: 58px minmax(0, 1fr) 58px; }
       .adjust-button, .value-input, .toggle-control { height: 54px; }
@@ -864,13 +822,7 @@ HTML = """<!doctype html>
     <button class="group-tab" data-group="display" type="button">디스플레이</button>
   </nav>
   <main>
-    <div class="view-bar">
-      <div class="view-tabs" aria-label="표시 범위">
-        <button class="view-tab active" data-view="quick" type="button">빠른 조정</button>
-        <button class="view-tab" data-view="all" type="button">전체 설정</button>
-      </div>
-      <div id="count" class="count"></div>
-    </div>
+    <div id="count" class="count"></div>
     <div id="group-note" class="group-note"></div>
     <div id="message" role="status"></div>
     <div id="sections"></div>
@@ -882,7 +834,6 @@ HTML = """<!doctype html>
   <script>
     let snapshot = null;
     let activeGroup = "steering";
-    let activeView = "quick";
     let messageTimer = null;
 
     const sections = document.getElementById("sections");
@@ -965,9 +916,6 @@ HTML = """<!doctype html>
         description: "추가 설명이 등록되지 않은 파라미터입니다.",
         increase: "값이 증가합니다.",
         decrease: "값이 감소합니다.",
-        quick: false,
-        quick_section: "기타",
-        quick_order: Number.MAX_SAFE_INTEGER,
       };
     }
 
@@ -1220,37 +1168,21 @@ HTML = """<!doctype html>
       groupNote.classList.toggle("visible", Boolean(note));
       const params = snapshot.params[activeGroup];
       const metadata = snapshot.metadata[activeGroup] || {};
-      const visible = Object.entries(params).filter(([key, value]) => {
-        const meta = metadata[key] || genericMeta(key, value);
-        return activeView === "all" || meta.quick;
-      });
-      if (activeView === "quick") {
-        visible.sort(([keyA, valueA], [keyB, valueB]) => {
-          const metaA = metadata[keyA] || genericMeta(keyA, valueA);
-          const metaB = metadata[keyB] || genericMeta(keyB, valueB);
-          return (metaA.quick_order ?? Number.MAX_SAFE_INTEGER) -
-            (metaB.quick_order ?? Number.MAX_SAFE_INTEGER);
-        });
-      }
+      const visible = Object.entries(params);
       count.textContent = `${visible.length}개 항목`;
       const grouped = new Map();
       for (const [key, value] of visible) {
         const meta = metadata[key] || genericMeta(key, value);
-        const sectionName = activeView === "quick"
-          ? (meta.quick_section || meta.section)
-          : meta.section;
-        if (!grouped.has(sectionName)) grouped.set(sectionName, []);
-        grouped.get(sectionName).push([key, value, meta]);
+        if (!grouped.has(meta.section)) grouped.set(meta.section, []);
+        grouped.get(meta.section).push([key, value, meta]);
       }
       const orderedGroups = [...grouped.entries()];
-      if (activeView === "all") {
-        const order = sectionOrder[activeGroup] || [];
-        orderedGroups.sort(([nameA], [nameB]) => {
-          const rankA = order.includes(nameA) ? order.indexOf(nameA) : order.length;
-          const rankB = order.includes(nameB) ? order.indexOf(nameB) : order.length;
-          return rankA - rankB;
-        });
-      }
+      const order = sectionOrder[activeGroup] || [];
+      orderedGroups.sort(([nameA], [nameB]) => {
+        const rankA = order.includes(nameA) ? order.indexOf(nameA) : order.length;
+        const rankB = order.includes(nameB) ? order.indexOf(nameB) : order.length;
+        return rankA - rankB;
+      });
       for (const [sectionName, entries] of orderedGroups) {
         const section = document.createElement("section");
         section.className = "section";
@@ -1271,7 +1203,7 @@ HTML = """<!doctype html>
       if (!visible.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = "빠른 조정 항목이 없습니다.";
+        empty.textContent = "표시할 항목이 없습니다.";
         sections.appendChild(empty);
       }
     }
@@ -1284,14 +1216,6 @@ HTML = """<!doctype html>
         refreshConnection();
         render();
         window.scrollTo({top: 0, behavior: "smooth"});
-      });
-    });
-    document.querySelectorAll(".view-tab").forEach(tab => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".view-tab").forEach(item => item.classList.remove("active"));
-        tab.classList.add("active");
-        activeView = tab.dataset.view;
-        render();
       });
     });
     document.getElementById("reload").addEventListener("click", () => loadParams(true));

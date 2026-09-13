@@ -16,6 +16,9 @@ namespace {
 constexpr double kDtModel = 0.05;
 // plan 끝점이 이보다 가까우면 plan이 붕괴한 것(정지: 실측 5.6 m, 주행: 60 m+).
 constexpr double kMinPlanReachM = 10.0;
+// 경로 인계 램프(1/s). 차선을 버릴 때 0.5초, 되찾을 때 0.25초.
+constexpr double kPlanMixOutRatePerS = 2.0;
+constexpr double kPlanMixInRatePerS = 4.0;
 
 double interp(double x, const double *xp, const double *fp, size_t count) {
   if (count == 0) return 0.0;
@@ -116,8 +119,16 @@ public:
     };
     left_prob *= std_mod(left_std_);
     right_prob *= std_mod(right_std_);
-    left_prob_eff_ = left_prob;
-    right_prob_eff_ = right_prob;
+    /* 차선 std는 std_mod 밴드(0.15~0.40)를 0.10초에 가로지른다(실측 2.43/s).
+     * 그대로 쓰면 블렌드 가중치와 랜리스 전환이 같은 프레임에 통째로 뒤집힌다.
+     * 둘의 공통 입력을 늦춘다. 평균 가중치는 바뀌지 않는다. */
+    const double prob_step = kProbRatePerS * kDtModel;
+    left_prob_eff_ = std::clamp(left_prob, left_prob_eff_ - prob_step,
+                                left_prob_eff_ + prob_step);
+    right_prob_eff_ = std::clamp(right_prob, right_prob_eff_ - prob_step,
+                                 right_prob_eff_ + prob_step);
+    left_prob = left_prob_eff_;
+    right_prob = right_prob_eff_;
 
     const double certainty = left_prob * right_prob;
     lane_width_certainty_.update(certainty);
@@ -193,6 +204,8 @@ private:
   static constexpr std::array<double, 2> kLaneWidthSpeed = {0.0, 31.0};
   static constexpr std::array<double, 2> kLaneWidth = {2.8, 3.5};
   static constexpr double kWidthLearnMinCertainty = 0.25;
+  // 유효 확률 변화율 상한(1/s). 0→1에 0.5초.
+  static constexpr double kProbRatePerS = 2.0;
   std::array<double, kTrajectorySize> lane_t_{};
   std::array<double, kTrajectorySize> lane_x_{};
   std::array<double, kTrajectorySize> left_y_{};
@@ -281,8 +294,19 @@ struct LateralPlanner::Impl {
     } else if (!lane_change_off) {
       laneless_buffer = false;
     }
-    if (!use_model_path)
-      path = lane_planner.lane_path(path_t, path);
+    /* 전환 임계값(유효확률 0.3)에서 블렌드 가중치는 아직 0.51이라, 경로 출처를
+     * 한 프레임에 바꾸면 목표가 8.5 cm 튄다(2026-09-13 실측, 전환 434회).
+     * 판정은 그대로 두고 인계만 섞는다. 차선을 버리는 방향은 0.5초로 늦추고,
+     * 되찾는 방향은 목표가 차선 중심 쪽으로 가므로 0.25초로 당긴다. */
+    const double mix_target = use_model_path ? 1.0 : 0.0;
+    const double mix_step = (mix_target > plan_mix ? kPlanMixOutRatePerS
+                                                   : kPlanMixInRatePerS) * kDtModel;
+    plan_mix = std::clamp(mix_target, plan_mix - mix_step, plan_mix + mix_step);
+    if (plan_mix < 1.0) {
+      const auto blended = lane_planner.lane_path(path_t, path);
+      for (int i = 0; i < kTrajectorySize; ++i)
+        path[i][1] = plan_mix * path[i][1] + (1.0 - plan_mix) * blended[i][1];
+    }
     lane_planner.apply_path_offset(&path);
 
     std::array<double, kTrajectorySize> distance{};
@@ -456,6 +480,8 @@ struct LateralPlanner::Impl {
   double lane_change_min_speed_mps = 30.0 / 3.6;
   bool laneless_mode = false;
   bool laneless_buffer = false;
+  /* 0 = 차선 융합 경로, 1 = 모델 플랜. 전환 판정을 그대로 따라가되 램프로 움직인다. */
+  double plan_mix = 1.0;
   int invalid_count = 0;
   int lane_change_state = 0;
   int direction = 0;

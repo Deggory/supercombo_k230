@@ -30,23 +30,6 @@ class FakeDisplayController:
 
 
 class ParamStoreTest(unittest.TestCase):
-    EXPECTED_QUICK = {
-        "steering": [
-            "torque_max_lat_accel_raw",
-            "steer_actuator_delay",
-            "path_offset_m",
-            "torque_lat_accel_offset",
-        ],
-        "driving": ["laneless_mode"],
-        "adaptive_cruise": [
-            "enabled",
-            "following_time_s",
-            "standstill_gap_m",
-        ],
-        "recording": ["enabled"],
-        "display": ["enabled", "brightness_percent"],
-    }
-
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         root = Path(self.temporary.name)
@@ -162,21 +145,6 @@ class ParamStoreTest(unittest.TestCase):
                         self.assertIsInstance(
                             metadata.get(field), (int, float), f"{group}.{key}.{field}"
                         )
-
-    def test_quick_tuning_layout_is_explicit_and_stable(self):
-        for group, expected in self.EXPECTED_QUICK.items():
-            quick = {
-                key: metadata
-                for key, metadata in PARAM_METADATA[group].items()
-                if metadata.get("quick")
-            }
-            self.assertEqual(set(quick), set(expected))
-            self.assertTrue(all(metadata.get("quick_section") for metadata in quick.values()))
-            orders = [metadata.get("quick_order") for metadata in quick.values()]
-            self.assertTrue(all(isinstance(order, int) for order in orders))
-            self.assertEqual(len(orders), len(set(orders)))
-            ordered = sorted(quick, key=lambda key: quick[key]["quick_order"])
-            self.assertEqual(ordered, expected)
 
 
 if __name__ == "__main__":
