@@ -74,10 +74,13 @@ static const PiezoTone kSignalChanged[] = {
     {784, 180, PIEZO_DEFAULT_DUTY},
 };
 /* 이 집합에서 유일하게 3도가 아닌 완전5도-4도로 올라간다. 같은 C장3화음을
- * 훑는 kSignalChanged와 음정 구조로 구분하려는 것이다. */
+ * 훑는 kSignalChanged와 음정 구조로 구분하려는 것이다. 앞 두 음은 피에조에서
+ * 저역이 깎여 약하게 들리는 도입부다. */
 static const PiezoTone kActivated[] = {
-    {523, 55, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
-    {784, 55, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
+    {262, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
+    {392, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
+    {523, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
+    {784, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
     {1047, 240, PIEZO_DEFAULT_DUTY},
 };
 static const PiezoTone kDeactivated[] = {
