@@ -33,6 +33,9 @@ struct AdaptiveCruiseInput {
   int driver_button = 0;
   int driver_main_button = 0;
   float ego_speed_kph = 0.0f;
+  /* 클러스터 표시 속도. 설정 속도와 같은 척도이고 휠 속도와는 다르다
+   * (K7 실측 6.6% 높음). 두 척도를 잇는 비율을 여기서 학습한다. */
+  float cluster_speed_kph = 0.0f;
   float driver_set_speed_kph = 0.0f;
   bool vision_lead_updated = false;
   bool vision_lead_valid = false;
@@ -48,6 +51,8 @@ struct AdaptiveCruiseOutput {
   float maximum_speed_kph = 0.0f;
   float commanded_speed_kph = 0.0f;
   float target_speed_kph = 0.0f;
+  /* 학습된 클러스터/휠 속도 비. 1에서 멀어지면 척도 보정이 동작 중이다. */
+  float display_scale = 1.0f;
   int command_button = 0;
 };
 
@@ -60,7 +65,8 @@ public:
   AdaptiveCruiseOutput update(const AdaptiveCruiseInput &input);
 
 private:
-  void capture_driver_set_speed(float speed_kph, double now_s);
+  void begin_session(float speed_kph, double now_s);
+  void update_display_scale(const AdaptiveCruiseInput &input, double dt_s);
   void update_vision_lead(const AdaptiveCruiseInput &input);
   float minimum_speed_kph(bool speed_unit_mph) const;
   float display_step_kph(bool speed_unit_mph) const;
@@ -70,14 +76,37 @@ private:
   bool previous_cruise_active_ = false;
   int previous_driver_button_ = 0;
   int previous_driver_main_button_ = 0;
+  /* 운전자가 의도한 상한. 세션 시작과 운전자 조작이 끝난 뒤에만 정한다. */
   float maximum_speed_kph_ = 0.0f;
+  /* 차량의 실제 설정 속도에 대한 우리 추정. 이 차는 설정 속도를 CAN으로
+   * 보고하지 않으므로(SCC 없음) 자기 명령을 적산하는 수밖에 없고, 그래서
+   * 틀릴 수 있다는 전제로 아래 두 장치를 둔다: 천장 대비 하강 총량 상한과
+   * 클러스터 속도와 어긋날 때의 재앵커. */
   float commanded_speed_kph_ = 0.0f;
   float filtered_lead_distance_m_ = 0.0f;
   float filtered_lead_relative_speed_mps_ = 0.0f;
   double last_valid_lead_s_ = -1.0;
   double last_command_s_ = -1.0;
-  double last_set_command_s_ = -1.0;
   double last_accelerator_override_s_ = -1.0;
+  double last_update_s_ = -1.0;
+  /* cruise_active 가 꺼진 시각. 한 틱 깜빡임으로 세션을 버리지 않도록 유예. */
+  double cruise_inactive_since_s_ = -1.0;
+  /* 운전자가 버튼을 만지는 동안과 그 뒤 정착 시간. 이 구간에는 자동 명령을
+   * 쉬고, 끝나면 실측 속도로 다시 앵커한다. */
+  double driver_adjust_until_s_ = -1.0;
+  bool reanchor_pending_ = false;
+  /* 클러스터 속도가 우리 추정과 오래 어긋난 시각(펄스 유실·스텝 크기 불일치). */
+  double mismatch_since_s_ = -1.0;
+  /* 명령이 차량에 듣지 않는다고 판단한 뒤의 휴지 시각. 계속 눌러봐야 CAN만
+   * 채우므로 물러났다가 가끔 다시 시도한다. */
+  double ineffective_until_s_ = -1.0;
+  /* 재앵커 전에 클러스터 속도가 실제로 정착했는지 본다. 고정 시간만 기다리면
+   * 아직 수렴 중인 값을 천장으로 굳힌다. */
+  float cluster_ref_kph_ = 0.0f;
+  double cluster_ref_s_ = -1.0;
+  bool last_auto_command_was_set_ = false;
+  float display_scale_ = 1.0f;
+  bool display_scale_valid_ = false;
   int command_button_ = 0;
   int command_frames_remaining_ = 0;
 };

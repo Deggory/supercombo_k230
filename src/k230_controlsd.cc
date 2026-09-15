@@ -621,6 +621,7 @@ int main() {
       adaptive_input.driver_button = vehicle.clu_button;
       adaptive_input.driver_main_button = vehicle.clu_main_button;
       adaptive_input.ego_speed_kph = ego_speed_kph;
+      adaptive_input.cluster_speed_kph = last_result.cluster_speed_kph;
       adaptive_input.driver_set_speed_kph = cruise_set_speed_kph(vehicle);
       adaptive_input.vision_lead_updated = model_updated;
       adaptive_input.vision_lead_valid = vision_lead_signal_valid;
