@@ -371,7 +371,6 @@ struct LateralPlanner::Impl {
     target.capture_timestamp_ns = model.capture_timestamp_ns;
     target.mpc_solution_valid = invalid_count < 2;
     target.laneless_mode = use_model_path;
-    target.lane_valid = true;
     target.lane_left_y_m = static_cast<float>(lane_planner.near_left_y());
     target.lane_right_y_m = static_cast<float>(lane_planner.near_right_y());
     target.lane_width_m = static_cast<float>(lane_planner.lane_width());
@@ -388,8 +387,6 @@ struct LateralPlanner::Impl {
     for (int i = 0; i < kLateralControlN; ++i) {
       target.psis[i] = static_cast<float>(mpc.nodes()[i].psi);
       target.curvatures[i] = static_cast<float>(mpc.nodes()[i].curvature);
-      target.curvature_rates[i] = i < kLatMpcN
-          ? static_cast<float>(mpc.rates()[i]) : 0.0f;
     }
     return target;
   }

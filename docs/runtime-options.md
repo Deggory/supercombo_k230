@@ -40,6 +40,10 @@ true.
 - `SUPERCOMBO_WARP_SCALAR=1`
   - disables the C908 RVV input-warp kernel for diagnostics and uses the
     bit-exact scalar fallback.
+- `SUPERCOMBO_WARP_CPU=1`
+  - disables the VGLite GPU warp and returns the whole input warp to the CPU.
+    The GPU path also disables itself when VGLite or the tensor's physical
+    address is unavailable.
 
 ## Storage and replay
 

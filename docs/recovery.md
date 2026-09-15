@@ -154,16 +154,16 @@ Headless replay from collected driving logs:
 
 ```sh
 # Host side, from this repository:
-python3 tools/k230/export_replay_nv12.py \
-  --segment-dir device_collected/2026-05-23_1600_combined/part1_20260523_174953/1970-01-01--09-00-59--44 \
-  --out tools/k230/out/replay_nv12/replay_120.scnv12 \
+python3 tools/model/make_replay.py \
+  --route recordings/<route> \
+  --out /tmp/replay_nv12 \
   --frames 120
-scp tools/k230/out/replay_nv12/replay_120.scnv12 \
+scp /tmp/replay_nv12/replay.scnv12 \
   root@192.168.219.115:/root/supercombo_k230/
 
 # Board side, using the split model process directly:
 cd /root/supercombo_k230
-SUPERCOMBO_REPLAY_NV12=/root/supercombo_k230/replay_120.scnv12 \
+SUPERCOMBO_REPLAY_NV12=/root/supercombo_k230/replay.scnv12 \
   ./k230_modeld models/supercombo.kmodel 0
 ```
 

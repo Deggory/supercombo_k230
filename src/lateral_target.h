@@ -23,9 +23,7 @@ struct LateralTarget {
     int desire = 0;
     float psis[kLateralControlN] = {};
     float curvatures[kLateralControlN] = {};
-    float curvature_rates[kLateralControlN] = {};
     // 차선 관측값(로그 전용). 모델 좌표계(+y=오른쪽), 오프셋 미적용.
-    bool lane_valid = false;
     float lane_left_y_m = 0.0f;
     float lane_right_y_m = 0.0f;
     float lane_width_m = 0.0f;

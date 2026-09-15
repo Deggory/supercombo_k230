@@ -76,14 +76,14 @@ static const PiezoTone kSignalChanged[] = {
 /* 이 집합에서 유일하게 3도가 아닌 완전5도-4도로 올라간다. 같은 C장3화음을
  * 훑는 kSignalChanged와 음정 구조로 구분하려는 것이다. 앞 두 음은 피에조에서
  * 저역이 깎여 약하게 들리는 도입부다. */
-static const PiezoTone kActivated[] = {
+static const PiezoTone kEngage[] = {
     {262, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
     {392, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
     {523, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
     {784, 45, PIEZO_DEFAULT_DUTY}, {0, 12, 0},
     {1047, 240, PIEZO_DEFAULT_DUTY},
 };
-static const PiezoTone kDeactivated[] = {
+static const PiezoTone kDisengage[] = {
     {784, 70, PIEZO_DEFAULT_DUTY}, {0, 15, 0},
     {659, 70, PIEZO_DEFAULT_DUTY}, {0, 15, 0},
     {523, 70, PIEZO_DEFAULT_DUTY}, {0, 15, 0},
@@ -105,21 +105,17 @@ static const PiezoTone kUnable[] = {
 };
 
 static const PiezoTone *const kSequences[PIEZO_ALERT_COUNT] = {
-    kSignalChanged, kActivated, kDeactivated, kUnavailable,
-    kActivated, kDeactivated, kUnable,
+    kSignalChanged, kUnavailable, kEngage, kDisengage, kUnable,
 };
 static const size_t kSequenceLengths[PIEZO_ALERT_COUNT] = {
     sizeof(kSignalChanged) / sizeof(kSignalChanged[0]),
-    sizeof(kActivated) / sizeof(kActivated[0]),
-    sizeof(kDeactivated) / sizeof(kDeactivated[0]),
     sizeof(kUnavailable) / sizeof(kUnavailable[0]),
-    sizeof(kActivated) / sizeof(kActivated[0]),
-    sizeof(kDeactivated) / sizeof(kDeactivated[0]),
+    sizeof(kEngage) / sizeof(kEngage[0]),
+    sizeof(kDisengage) / sizeof(kDisengage[0]),
     sizeof(kUnable) / sizeof(kUnable[0]),
 };
 static const char *const kAlertNames[PIEZO_ALERT_COUNT] = {
-    "signal_changed", "activated", "deactivated", "unavailable",
-    "engage", "disengage", "unable",
+    "signal_changed", "unavailable", "engage", "disengage", "unable",
 };
 
 static int env_is_disabled(const char *name)

@@ -10,14 +10,12 @@ extern "C" {
 /* 보드 알림 시퀀스와 engage 음을 포함한다. */
 typedef enum PiezoAlert {
   PIEZO_ALERT_SIGNAL_CHANGED = 0,
-  PIEZO_ALERT_ACTIVATED = 1,
-  PIEZO_ALERT_DEACTIVATED = 2,
-  PIEZO_ALERT_UNAVAILABLE = 3,
-  PIEZO_ALERT_ENGAGE = 4,
-  PIEZO_ALERT_DISENGAGE = 5,
+  PIEZO_ALERT_UNAVAILABLE = 1,
+  PIEZO_ALERT_ENGAGE = 2,
+  PIEZO_ALERT_DISENGAGE = 3,
   /* openpilot의 거부/"engage 불가" 알림음. */
-  PIEZO_ALERT_UNABLE = 6,
-  PIEZO_ALERT_COUNT = 7,
+  PIEZO_ALERT_UNABLE = 4,
+  PIEZO_ALERT_COUNT = 5,
 } PiezoAlert;
 
 typedef struct PiezoBuzzer PiezoBuzzer;
